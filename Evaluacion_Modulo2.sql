@@ -182,3 +182,147 @@ film.length AS Duracion
 FROM film
 WHERE rating = 'R' and length > 120
 ORDER BY length;
+
+
+-- Ejercicio 18: Muestra el nombre y apellido de los actores que aparecen en más de 10 películas.
+
+SELECT
+actor.first_name AS NombreActor, 
+actor.last_name AS ApellidoActor,
+COUNT(DISTINCT film.film_id) AS ActoresMas10Peliculas
+FROM actor
+LEFT JOIN film_actor
+ON actor.actor_id = film_actor.actor_id
+LEFT JOIN film
+ON film_actor.film_id = film.film_id
+GROUP BY actor.actor_id
+HAVING COUNT(DISTINCT film.film_id) > 10
+ORDER BY ActoresMas10Peliculas;
+
+/* Para comprobar cuantas pelis tiene cada actor, tomo como ejemplo a Emily Dee
+Primero veo cual es su actor_id
+SELECT 
+actor_id
+FROM actor
+WHERE first_name = 'EMILY';
+
+Uso ese actor_id para ver en cuantas pelis sale, y da como resultado 14, coincide con el resultado de la consulta
+SELECT 
+film.title,
+film_actor.actor_id
+FROM film
+LEFT JOIN film_actor
+ON film.film_id = film_actor.film_id
+WHERE actor_id = 148;
+
+*/
+
+
+-- Ejercicio 19: Hay algún actor o actriz que no apareca en ninguna película en la tabla film_actor.
+-- Revisar
+
+SELECT
+A.actor_id,
+B.film_id
+FROM film_actor AS A
+LEFT JOIN film_actor AS B
+ON A.film_id = B.film_id
+WHERE B.film_id IS NULL;
+
+
+-- Ejercicio 20:  Encuentra las categorías de películas que tienen un promedio de duración superior a 120 minutos y muestra el nombre de la categoría junto con el promedio de duración
+-- REVISAR
+
+SELECT
+film.film_id AS IdPelicula,
+AVG(length) AS MediaDuracion 
+FROM film
+LEFT JOIN film_category
+ON film.film_id = film_category.film_id
+GROUP BY category_id
+HAVING AVG(length) > 120;
+
+SELECT 
+category_id AS Categoria,
+COUNT(film_id) AS NumeroPeliculas
+FROM film_category
+GROUP BY category_id;
+
+
+-- Ejercicio 21: Encuentra los actores que han actuado en al menos 5 películas y muestra el nombre del actor junto con la cantidad de películas en las que han actuado
+-- Uno la tabla_actor con la tabla film_actor donde aplico filtro para calcular peliculas por actor y elegir solo los de >5
+
+SELECT
+actor.first_name AS Nombre,
+actor.last_name AS Apellido,
+actor.actor_id AS ActorID,
+COUNT(DISTINCT(film_id)) AS RecuentoPeliculas
+FROM actor
+LEFT JOIN film_actor
+ON actor.actor_id = film_actor.actor_id
+GROUP BY actor.actor_id
+HAVING COUNT(DISTINCT(film_id)) >= 5
+ORDER BY RecuentoPeliculas;
+
+
+-- Ejercicio 22: Encuentra el título de todas las películas que fueron alquiladas por más de 5 días. Utiliza una subconsulta para encontrar los rental_ids con una duración superior a 5 días y luego selecciona las películas correspondientes.
+SELECT 
+film.title AS TituloPelicula, 
+film.rental_duration AS DuracionAlquiler
+FROM film
+WHERE film_id IN(
+	SELECT 
+    film_id
+	FROM film
+	WHERE rental_duration > 5);
+
+
+-- Ejercicio 23: . Encuentra el nombre y apellido de los actores que no han actuado en ninguna película de la categoría "Horror". Utiliza una subconsulta para encontrar los actores que han actuado en películas de la categoría "Horror" y luego exclúyelos de la lista de actores
+
+/* Primero hago subconsulta que devuelva categorias, excluyendo categoria "Horror":
+SELECT 
+category_id,
+name
+FROM category
+WHERE name NOT IN ('Horror') 
+
+Después hago otras subconsultas que conecten la categoría con la pelicula y la pelicula con el actor
+ */
+
+SELECT
+actor.first_name AS Nombre,
+actor.last_name AS Apellido
+FROM actor
+WHERE actor_id IN(
+	SELECT
+	actor_id
+	FROM film_actor
+	WHERE film_id IN (
+		SELECT 
+		film_id
+		FROM film_category
+		WHERE category_id IN (
+			SELECT 
+			category_id
+			FROM category
+			WHERE name NOT IN ('Horror'))));
+            
+
+-- Ejercicio 24: Encuentra el título de las películas que son comedias y tienen una duración mayor a 180 minutos en la tabla film.
+SELECT 
+title AS Titulo,
+length AS Duracion
+FROM film
+WHERE length > 180 AND film_id IN(
+	SELECT film_id
+	FROM film_category
+	WHERE category_id IN (
+		SELECT
+		category_id
+		FROM category
+		WHERE name = 'Comedy'));
+   
+
+
+
+
