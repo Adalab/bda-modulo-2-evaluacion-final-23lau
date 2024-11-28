@@ -76,7 +76,7 @@ GROUP BY rating;
 
 -- Ejercicio 10: Encuentra la cantidad total de películas alquiladas por cada cliente y muestra el ID del cliente, su nombre y apellido junto con la cantidad de películas alquiladas.
 
--- Uno la tabla cliente con tabla rental, de esta segunda obtengo los datos de alquiler agrupados por cliente_id(customer_id) 
+-- Uno la tabla cliente con tabla rental, de esta segunda se obtiene los datos de alquiler agrupados por cliente(customer_id) 
 SELECT
 customer.customer_id AS ClienteID,
 customer.first_name AS NombreCliente,
@@ -127,7 +127,7 @@ LEFT JOIN film
 ON film.film_id = film_actor.film_id
 WHERE title IN ("Indian Love");
 
--- Otra manera de hacerlo sería utilizando una subconsulta:
+-- También podría hacerse utilizando una subconsulta:
 SELECT
 actor.first_name AS Nombre,
 actor.last_name AS Apellido, 
@@ -162,7 +162,7 @@ ORDER BY film.release_year;
 
 -- Ejercicio 16: Encuentra el título de todas las películas que son de la misma categoría que "Family"
 
--- Enlazo tabla_film con tabla_categoria a través de tabla film_categoría (que tiene datos en común) y luego selecciono solo las de categoría "Family"
+-- Uno tabla_film con tabla_categoria a través de tabla film_categoría (que tiene datos en común) y luego selecciono solo las de categoría "Family"
 SELECT 
 film.title AS Titulo, 
 category.name AS Categoria
@@ -185,7 +185,6 @@ ORDER BY length;
 
 
 -- Ejercicio 18: Muestra el nombre y apellido de los actores que aparecen en más de 10 películas.
-
 SELECT
 actor.first_name AS NombreActor, 
 actor.last_name AS ApellidoActor,
@@ -219,34 +218,27 @@ WHERE actor_id = 148;
 
 
 -- Ejercicio 19: Hay algún actor o actriz que no apareca en ninguna película en la tabla film_actor.
--- Revisar
+-- Comparto las tablas actor y film_actor, uniendolas con actor_id, y pido que busque si hay algun actor_id que no esté (sea NULO) en film_actor
 
 SELECT
-A.actor_id,
-B.film_id
-FROM film_actor AS A
-LEFT JOIN film_actor AS B
-ON A.film_id = B.film_id
-WHERE B.film_id IS NULL;
+actor.actor_id AS Actor
+FROM actor 
+LEFT JOIN film_actor
+ON actor.actor_id = film_actor.actor_id
+WHERE film_actor.actor_id IS NULL;
 
 
 -- Ejercicio 20:  Encuentra las categorías de películas que tienen un promedio de duración superior a 120 minutos y muestra el nombre de la categoría junto con el promedio de duración
--- REVISAR
+-- Uno tabla film_category y category, a través de film_id, y agrupo por categorias
 
 SELECT
-film.film_id AS IdPelicula,
-AVG(length) AS MediaDuracion 
-FROM film
-LEFT JOIN film_category
-ON film.film_id = film_category.film_id
-GROUP BY category_id
-HAVING AVG(length) > 120;
-
-SELECT 
-category_id AS Categoria,
-COUNT(film_id) AS NumeroPeliculas
+film_category.category_id AS CategoriaPelicula,
+AVG(length) AS promedio_duracion
 FROM film_category
-GROUP BY category_id;
+LEFT JOIN film
+ON film_category.film_id = film.film_id
+GROUP BY film_category.category_id
+HAVING AVG(length) > 120;
 
 
 -- Ejercicio 21: Encuentra los actores que han actuado en al menos 5 películas y muestra el nombre del actor junto con la cantidad de películas en las que han actuado
@@ -321,7 +313,55 @@ WHERE length > 180 AND film_id IN(
 		category_id
 		FROM category
 		WHERE name = 'Comedy'));
-   
+        
+
+-- Ejercicio 25: Encuentra todos los actores que han actuado juntos en al menos una película. La consulta debe mostrar el nombre y apellido de los actores y el número de películas en las que han actuado juntos.
+
+-- Hago Self join para saber que actores han actuado juntos --
+SELECT 
+a.actor_id AS IdActor1,
+b.actor_id AS IdActor2,
+a.film_id AS Pelicula
+FROM film_actor AS a, film_actor AS b
+WHERE a.actor_id <> b.actor_id
+AND a.film_id = b.film_id
+
+
+-- Guardo resultados en nueva tabla (actores_juntos) que me devuelve: actor 1, actor 2 y el id_pelicula que han actuado juntos
+CREATE TABLE Actores_PeliculasComun (
+SELECT 
+a.actor_id AS IdActor1,
+b.actor_id AS IdActor2,
+a.film_id AS Pelicula
+FROM film_actor AS a, film_actor AS b
+WHERE a.actor_id <> b.actor_id
+AND a.film_id = b.film_id
+);
+
+-- En esta nueva tabla tengo los id de los actores que han actuado juntos y la pelicula en la que actuan
+SELECT*
+FROM actores_peliculascomun;
+
+-- Uno la tabla actor con la tabla creada y así puedo obtener nombre de los actores que actuan juntos
+SELECT
+a.first_name AS NombreActor1,
+a.last_name AS ApellidoActor1,
+b.first_name AS NombreActor2,
+b.last_name AS ApellidoACtor2
+FROM actor AS a, actor AS b
+WHERE a.actor_id IN (SELECT IdActor1 FROM actores_peliculascomun) AND b.actor_id IN (SELECT IdActor2 FROM actores_peliculascomun);
+
+
+
+
+
+
+    
+
+
+
+
+
 
 
 
